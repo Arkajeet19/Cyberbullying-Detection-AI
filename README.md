@@ -65,11 +65,11 @@ npm run dev
 
 ### Home Page
 
-![Home Page](screenshots/Screenshot 2026-06-06 155246.png)
+(![Home Page](./screenshots/Screenshot%202026-06-06%20155246.png))
 
 ### Prediction Example
 
-![Prediction Result](screenshots/Screenshot 2026-06-06 155334.png)
+
 
 ## Author
 
