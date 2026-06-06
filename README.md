@@ -65,7 +65,7 @@ npm run dev
 
 ### Home Page
 
-![Home Page](screenshots/homepage.png)
+![Home Page](Screenshot 2026-06-06 155246.png)
 
 ### Prediction Example
 
