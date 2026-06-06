@@ -69,7 +69,7 @@ npm run dev
 
 ### Prediction Example
 
-![Prediction Result](screenshots/prediction.png)
+![Prediction Result](screenshots/Screenshot 2026-06-06 155334.png)
 
 ## Author
 
