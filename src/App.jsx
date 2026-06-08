@@ -12,7 +12,7 @@ function App() {
       setLoading(true);
 
       const response = await axios.post(
-        "http://127.0.0.1:5000/predict",
+      "https://cyberbullying-detection-ai.onrender.com/predict",
         {
           text,
         }
