@@ -1,14 +1,21 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
+import os
 
 app = Flask(__name__)
 
 CORS(app)
 
-model = joblib.load("svm_model.pkl")
-vectorizer = joblib.load("tfidf.pkl")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+model = joblib.load(
+    os.path.join(BASE_DIR, "svm_model.pkl")
+)
+
+vectorizer = joblib.load(
+    os.path.join(BASE_DIR, "tfidf.pkl")
+)
 LABELS = [
     'religious_hate',
     'ethnic_hate',
@@ -55,5 +62,4 @@ def predict():
 
 
 if __name__ == "__main__":
-
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
