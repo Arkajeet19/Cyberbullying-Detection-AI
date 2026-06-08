@@ -63,7 +63,13 @@ npm run dev
 
 ## Screenshots
 
-(Add screenshots here)
+### Home Page
+
+(![Home Page](./screenshots/Screenshot%202026-06-06%20155246.png))
+
+### Prediction Example
+
+![Prediction Result](./screenshots/Screenshot%202026-06-06%20155334.png)
 
 ## Author
 
