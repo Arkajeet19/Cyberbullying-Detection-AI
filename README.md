@@ -1,24 +1,28 @@
-# Cyberbullying Detection AI
+# CyberGuard
 
-A full-stack machine learning web application that detects cyberbullying content from user-provided text using Natural Language Processing and Multi-Label Classification.
+An AI-powered content moderation platform that classifies text into 13 categories of harmful content in real time, logs every moderation decision, and gives moderators the tools to review and act on flagged content.
+
+Originally built as a standalone cyberbullying classifier, CyberGuard has since grown into a full platform: a persistent backend, a history log, an analytics dashboard, and an admin review queue sit on top of the same core ML model.
 
 ## Features
 
-* Multi-label cyberbullying detection
-* Real-time text analysis
-* React frontend
-* Flask backend
-* TF-IDF feature extraction
-* Linear SVM classifier
-* Interactive dashboard UI
+* Real-time multi-label text moderation across 13 categories
+* Word- and character-level TF-IDF feature pipeline with a calibrated multi-label SVM classifier
+* Per-label decision thresholds tuned to improve recall on under-detected categories
+* Persistent moderation history — every submission is logged and timestamped
+* Analytics dashboard with category-wise flag breakdowns and moderation-volume trends
+* Key-authenticated admin review queue for human moderators to audit and override flagged content
+* Multi-page React frontend (landing page, moderation tool, history, analytics, admin)
 
 ## Tech Stack
 
 ### Frontend
 
 * React
+* React Router
 * Vite
 * Tailwind CSS
+* Recharts
 * Axios
 
 ### Backend
@@ -26,23 +30,41 @@ A full-stack machine learning web application that detects cyberbullying content
 * Flask
 * Flask-CORS
 * Scikit-learn
-* Pandas
-* NumPy
+* SciPy
+* SQLite
 
 ### Machine Learning
 
-* TF-IDF Vectorization
-* Linear SVM
-* Multi-label Classification
+* Word-level + character-level TF-IDF vectorization
+* Linear SVM (One-vs-Rest, multi-label, class-balanced)
+* Per-label F1-maximizing threshold tuning
 
 ## Dataset
 
 * 684K+ text samples
-* 13 cyberbullying categories
+* 13 harmful-content categories
 
 ## Project Architecture
 
-User Input → React Frontend → Flask API → TF-IDF Vectorizer → Linear SVM Model → Prediction Results
+```
+User Input → React Frontend → Flask API → TF-IDF Vectorizers → SVM Classifier → Thresholded Labels
+                                    ↓
+                              SQLite (moderation_logs)
+                                    ↓
+                   History / Analytics / Admin Review Queue
+```
+
+## API Endpoints
+
+| Method | Endpoint                    | Description                                  |
+|--------|------------------------------|-----------------------------------------------|
+| POST   | `/api/moderate`              | Classify text, log the result, return labels |
+| GET    | `/api/history`                | Paginated moderation history                 |
+| GET    | `/api/stats`                  | Aggregate analytics (totals, category counts, 14-day timeline) |
+| GET    | `/api/admin/queue`            | Flagged, unreviewed items (requires `X-Admin-Key` header) |
+| POST   | `/api/admin/review/<id>`      | Mark an item reviewed, with an optional note (requires `X-Admin-Key` header) |
+
+`POST /predict` is kept as a backward-compatible alias for `/api/moderate`.
 
 ## Installation
 
@@ -51,8 +73,11 @@ User Input → React Frontend → Flask API → TF-IDF Vectorizer → Linear SVM
 ```bash
 cd Backend
 pip install -r requirements.txt
-py app.py
+python train.py    # generates svm_model.pkl, tfidf_word.pkl, tfidf_char.pkl, thresholds.pkl
+python app.py
 ```
+
+Set the `ADMIN_API_KEY` environment variable before deploying — it protects the `/api/admin/*` endpoints.
 
 ### Frontend
 
