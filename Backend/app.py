@@ -36,10 +36,8 @@ LABELS = [
     'other_cyberbullying_types',
     'not_cyberbullying'
 ]
-THRESHOLD_VALUES = [thresholds.get(label, 0.0) for label in LABELS]
+THRESHOLD_VALUES = [thresholds.get(label, 0.5) for label in LABELS]
 
-# Simple shared-secret admin auth. Fine for a portfolio deployment; swap for
-# real user accounts/JWT if this ever needs to serve more than one admin.
 ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY", "changeme")
 
 
@@ -58,16 +56,26 @@ def classify(raw_text):
     word_features = word_vectorizer.transform([text])
     char_features = char_vectorizer.transform([text])
     features = hstack([word_features, char_features]).tocsr()
-    scores = model.decision_function(features)[0]
-    return {label: int(scores[i] > THRESHOLD_VALUES[i]) for i, label in enumerate(LABELS)}
+
+    # predict_proba works now because train.py wraps the SVM in
+    # CalibratedClassifierCV -- these are real Platt-scaled probabilities,
+    # not raw decision_function scores.
+    probs = model.predict_proba(features)[0]
+
+    result = {}
+    for i, label in enumerate(LABELS):
+        confidence = float(probs[i])
+        result[label] = {
+            "flagged": int(confidence > THRESHOLD_VALUES[i]),
+            "confidence": round(confidence, 4),
+        }
+    return result
 
 
 @app.route("/")
 def home():
-    return {"message": "CyberGuard API running", "version": "2.0"}
+    return {"message": "CyberGuard API running", "version": "2.1"}
 
-
-# --- Core moderation -------------------------------------------------------
 
 @app.route("/api/moderate", methods=["POST"])
 def moderate():
@@ -83,13 +91,10 @@ def moderate():
     return jsonify({"id": log_id, "labels": labels})
 
 
-# Kept for backward compatibility with the old frontend build.
 @app.route("/predict", methods=["POST"])
 def predict_legacy():
     return moderate()
 
-
-# --- History -----------------------------------------------------------
 
 @app.route("/api/history", methods=["GET"])
 def history():
@@ -104,14 +109,10 @@ def history():
     })
 
 
-# --- Analytics -----------------------------------------------------------
-
 @app.route("/api/stats", methods=["GET"])
 def stats():
     return jsonify(database.get_stats())
 
-
-# --- Admin -----------------------------------------------------------------
 
 @app.route("/api/admin/queue", methods=["GET"])
 @require_admin

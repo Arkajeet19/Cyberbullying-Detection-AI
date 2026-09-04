@@ -48,8 +48,8 @@ function History() {
             <tbody>
               {items.map((item) => {
                 const flags = Object.entries(item.labels)
-                  .filter(([k, v]) => k !== "not_cyberbullying" && v === 1)
-                  .map(([k]) => k);
+                  .filter(([k, v]) => k !== "not_cyberbullying" && v.flagged === 1)
+                  .map(([k, v]) => ({ key: k, confidence: v.confidence }));
                 return (
                   <tr key={item.id} className="border-t border-slate-800">
                     <td className="px-4 py-3 max-w-md truncate text-slate-200">
@@ -60,12 +60,12 @@ function History() {
                         <span className="text-green-400 text-xs">Clean</span>
                       ) : (
                         <div className="flex flex-wrap gap-1">
-                          {flags.map((f) => (
+                          {flags.map(({ key, confidence }) => (
                             <span
-                              key={f}
+                              key={key}
                               className="bg-red-500/10 text-red-400 text-xs px-2 py-1 rounded"
                             >
-                              {formatLabel(f)}
+                              {formatLabel(key)} {(confidence * 100).toFixed(0)}%
                             </span>
                           ))}
                         </div>

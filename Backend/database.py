@@ -47,8 +47,11 @@ def get_conn():
 
 
 def log_moderation(text, labels):
-    """Stores one moderation result. Returns the new row's id."""
-    flagged = int(any(v == 1 for k, v in labels.items() if k != "not_cyberbullying"))
+    """Stores one moderation result. labels is a dict of
+    {label: {"flagged": 0/1, "confidence": float}}. Returns the new row's id."""
+    flagged = int(any(
+        v["flagged"] == 1 for k, v in labels.items() if k != "not_cyberbullying"
+    ))
     with get_conn() as conn:
         cur = conn.execute(
             "INSERT INTO moderation_logs (text, labels, flagged, reviewed, created_at) "
@@ -102,7 +105,7 @@ def get_stats():
     for r in label_rows:
         labels = json.loads(r["labels"])
         for k, v in labels.items():
-            if v == 1:
+            if v["flagged"] == 1:
                 label_counts[k] = label_counts.get(k, 0) + 1
 
     timeline = [

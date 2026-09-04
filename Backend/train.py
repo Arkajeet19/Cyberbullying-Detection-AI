@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import LinearSVC
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import precision_recall_curve, classification_report
 
 from preprocess import clean_text
@@ -43,7 +44,6 @@ X_train, X_val, y_train, y_val = train_test_split(
 
 print("Creating TF-IDF features (word + char n-grams)...")
 
-# Word-level: captures vocabulary/phrasing.
 word_vectorizer = TfidfVectorizer(
     max_features=20000,
     ngram_range=(1, 2),
@@ -51,12 +51,16 @@ word_vectorizer = TfidfVectorizer(
     sublinear_tf=True
 )
 
-# Char-level: robust to leetspeak, misspellings, slur variants that
-# word-level TF-IDF can't see because it never encountered that exact token.
+# No max_features cap here previously -- character 3-5-grams over 684K rows
+# produces an enormous vocabulary, which is a large part of what blew up
+# memory during calibration. Capping it keeps the matrix a manageable size
+# without meaningfully hurting the misspelling/leetspeak robustness this
+# vectorizer exists for.
 char_vectorizer = TfidfVectorizer(
     analyzer="char_wb",
     ngram_range=(3, 5),
     min_df=3,
+    max_features=30000,
     sublinear_tf=True
 )
 
@@ -68,26 +72,33 @@ X_val_word = word_vectorizer.transform(X_val)
 X_val_char = char_vectorizer.transform(X_val)
 X_val_vec = hstack([X_val_word, X_val_char]).tocsr()
 
-print("Training SVM...")
+print("Training calibrated SVM (this takes longer than before -- each label's SVM is now fit 3x for calibration)...")
 
-# class_weight='balanced' reweights the loss inversely to class frequency,
-# so common labels (e.g. not_cyberbullying) stop dominating the boundary.
-model = OneVsRestClassifier(
-    LinearSVC(C=0.5, class_weight="balanced")
-)
+# CalibratedClassifierCV fits the base LinearSVC on cv-1 folds and fits a
+# sigmoid (Platt scaling) mapping decision_function() scores -> P(label=1)
+# on the held-out fold. Without this, LinearSVC has no predict_proba at all --
+# decision_function() is an unbounded score, not a probability, and treating
+# it as one (e.g. showing raw scores as "confidence") would be dishonest.
+base_svm = LinearSVC(C=0.5, class_weight="balanced")
+calibrated_svm = CalibratedClassifierCV(estimator=base_svm, method="sigmoid", cv=3)
 
+# n_jobs=-1 previously tried to fit all 13 labels x 3 CV folds in parallel
+# at once, each holding its own copy of the ~684K-row sparse matrix in RAM --
+# that's what caused the ArrayMemoryError. n_jobs=2 keeps some parallelism
+# without exhausting memory on a typical machine. Drop to n_jobs=1
+# (fully sequential, slower but safest) if this still runs out of memory.
+model = OneVsRestClassifier(calibrated_svm, n_jobs=2)
 model.fit(X_train_vec, y_train)
 
-print("Tuning per-label decision thresholds on validation set...")
+print("Tuning per-label decision thresholds on validation set (using calibrated probabilities)...")
 
-val_scores = model.decision_function(X_val_vec)
+val_probs = model.predict_proba(X_val_vec)
 thresholds = {}
 
 for i, label in enumerate(LABEL_COLS):
     precisions, recalls, thresh_vals = precision_recall_curve(
-        y_val[:, i], val_scores[:, i]
+        y_val[:, i], val_probs[:, i]
     )
-    # Maximize F1 per label instead of using the default 0.0 cutoff.
     f1_scores = np.divide(
         2 * precisions * recalls,
         precisions + recalls,
@@ -95,12 +106,13 @@ for i, label in enumerate(LABEL_COLS):
         where=(precisions + recalls) != 0
     )
     best_idx = np.argmax(f1_scores[:-1]) if len(thresh_vals) > 0 else None
-    thresholds[label] = float(thresh_vals[best_idx]) if best_idx is not None else 0.0
+    # Thresholds are now probabilities (0-1), not raw decision_function scores.
+    thresholds[label] = float(thresh_vals[best_idx]) if best_idx is not None else 0.5
 
-print("Chosen thresholds:", thresholds)
+print("Chosen thresholds (probability cutoffs):", thresholds)
 
 print("Validation report at tuned thresholds:")
-val_pred = (val_scores > np.array([thresholds[l] for l in LABEL_COLS])).astype(int)
+val_pred = (val_probs > np.array([thresholds[l] for l in LABEL_COLS])).astype(int)
 print(classification_report(y_val, val_pred, target_names=LABEL_COLS, zero_division=0))
 
 print("Saving model, vectorizers, and thresholds...")

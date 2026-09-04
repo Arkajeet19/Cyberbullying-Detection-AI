@@ -83,15 +83,15 @@ function Admin() {
         <div className="space-y-4">
           {queue.map((item) => {
             const flags = Object.entries(item.labels)
-              .filter(([k, v]) => k !== "not_cyberbullying" && v === 1)
-              .map(([k]) => k);
+              .filter(([k, v]) => k !== "not_cyberbullying" && v.flagged === 1)
+              .map(([k, v]) => ({ key: k, confidence: v.confidence }));
             return (
               <div key={item.id} className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                 <p className="text-slate-200 mb-3">{item.text}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {flags.map((f) => (
-                    <span key={f} className="bg-red-500/10 text-red-400 text-xs px-2 py-1 rounded">
-                      {formatLabel(f)}
+                  {flags.map(({ key, confidence }) => (
+                    <span key={key} className="bg-red-500/10 text-red-400 text-xs px-2 py-1 rounded">
+                      {formatLabel(key)} {(confidence * 100).toFixed(0)}%
                     </span>
                   ))}
                 </div>

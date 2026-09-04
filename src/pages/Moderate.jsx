@@ -28,8 +28,15 @@ function Moderate() {
 
   const detected = result
     ? Object.entries(result)
-        .filter(([key, value]) => key !== "not_cyberbullying" && Number(value) === 1)
-        .map(([key]) => key)
+        .filter(([key, value]) => key !== "not_cyberbullying" && value.flagged === 1)
+        .map(([key, value]) => ({ key, confidence: value.confidence }))
+        .sort((a, b) => b.confidence - a.confidence)
+    : [];
+
+  const allScores = result
+    ? Object.entries(result)
+        .map(([key, value]) => ({ key, confidence: value.confidence }))
+        .sort((a, b) => b.confidence - a.confidence)
     : [];
 
   return (
@@ -69,13 +76,16 @@ function Moderate() {
 
             {detected.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {detected.map((item) => (
+                {detected.map(({ key, confidence }) => (
                   <div
-                    key={item}
-                    className="bg-red-500/10 border border-red-500 rounded-xl p-5"
+                    key={key}
+                    className="bg-red-500/10 border border-red-500 rounded-xl p-5 flex items-center justify-between"
                   >
                     <span className="text-red-400 font-semibold text-lg">
-                      🚨 {formatLabel(item)}
+                      🚨 {formatLabel(key)}
+                    </span>
+                    <span className="text-red-300 font-mono text-sm">
+                      {(confidence * 100).toFixed(0)}%
                     </span>
                   </div>
                 ))}
@@ -87,6 +97,28 @@ function Moderate() {
                 </span>
               </div>
             )}
+
+            <details className="mt-6">
+              <summary className="cursor-pointer text-slate-400 text-sm hover:text-slate-200">
+                Show full confidence breakdown
+              </summary>
+              <div className="mt-3 space-y-2">
+                {allScores.map(({ key, confidence }) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <span className="w-40 text-sm text-slate-300 shrink-0">{formatLabel(key)}</span>
+                    <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500"
+                        style={{ width: `${(confidence * 100).toFixed(1)}%` }}
+                      />
+                    </div>
+                    <span className="w-12 text-right text-xs text-slate-400 font-mono">
+                      {(confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </details>
           </div>
         )}
       </div>
