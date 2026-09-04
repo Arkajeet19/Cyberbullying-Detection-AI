@@ -30,3 +30,4 @@ dist/
 .env
 cyberbullying.csv
 Backend/cyberbullying.csv
+Backend/cyberguard.db
