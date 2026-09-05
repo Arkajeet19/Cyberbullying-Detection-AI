@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { UserPlus } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 function Register() {
@@ -26,39 +25,36 @@ function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-24">
-      <div className="text-center mb-8">
-        <UserPlus className="mx-auto text-blue-500 mb-3" size={36} />
-        <h1 className="text-3xl font-bold">Create Account</h1>
-      </div>
+    <div className="max-w-sm mx-auto px-6 py-24">
+      <h1 className="font-display text-3xl mb-8 text-center">Create account</h1>
 
-      <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="cg-panel p-6 space-y-4">
         <input
           type="text"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+          className="cg-input w-full px-4 py-3 text-sm"
         />
         <input
           type="password"
           placeholder="Password (min 6 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+          className="cg-input w-full px-4 py-3 text-sm"
         />
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-alarm text-sm">{error}</p>}
         <button
           type="submit"
           disabled={loading || !username || !password}
-          className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 py-3 rounded-lg font-semibold disabled:opacity-50"
+          className="cg-btn cg-btn-signal w-full py-3 text-sm"
         >
-          {loading ? "Creating account..." : "Create Account"}
+          {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
 
-      <p className="text-center text-slate-400 text-sm mt-4">
-        Already have an account? <Link to="/login" className="text-blue-400 hover:underline">Log in</Link>
+      <p className="text-center text-paper-dim text-sm mt-4">
+        Already have an account? <Link to="/login" className="text-signal hover:underline">Log in</Link>
       </p>
     </div>
   );

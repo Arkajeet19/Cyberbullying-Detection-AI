@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MessageSquare, AlertTriangle } from "lucide-react";
 import { fetchPosts, createPost } from "../api";
 import { useAuth } from "../context/AuthContext";
 
@@ -36,53 +35,51 @@ function Forum() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
-      <h1 className="text-4xl font-extrabold mb-8">Forum</h1>
+    <div className="max-w-2xl mx-auto px-6 py-16">
+      <h1 className="font-display text-4xl mb-8">Forum</h1>
 
       {user ? (
-        <form onSubmit={handlePost} className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-8">
+        <form onSubmit={handlePost} className="cg-panel p-5 mb-8">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Share something with the community..."
-            className="w-full h-24 bg-slate-800 rounded-lg p-3 border border-slate-700 focus:outline-none focus:border-blue-500 resize-none text-sm"
+            className="cg-input w-full h-20 p-3 text-sm resize-none"
           />
-          {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+          {error && <p className="text-alarm text-xs mt-2">{error}</p>}
           <button
             type="submit"
             disabled={posting || !content.trim()}
-            className="mt-3 bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            className="cg-btn cg-btn-signal mt-3 px-5 py-2 text-sm"
           >
             {posting ? "Posting..." : "Post"}
           </button>
         </form>
       ) : (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-8 text-center text-slate-400 text-sm">
-          <Link to="/login" className="text-blue-400 hover:underline">Log in</Link> to post or comment.
+        <div className="cg-panel p-5 mb-8 text-center text-paper-dim text-sm">
+          <Link to="/login" className="text-signal hover:underline">Log in</Link> to post or comment.
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {posts.length === 0 ? (
-          <p className="text-slate-500 text-center py-10">No posts yet — be the first.</p>
+          <p className="text-paper-dim text-center py-10 text-sm">No posts yet — be the first.</p>
         ) : (
           posts.map((post) => (
             <Link
               key={post.id}
               to={`/forum/${post.id}`}
-              className="block bg-slate-900 border border-slate-800 hover:border-blue-600/50 rounded-xl p-5 transition-colors"
+              className="block cg-panel p-5 hover:border-signal/40 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-slate-300">@{post.username}</span>
+                <span className="cg-mono text-xs text-paper-dim">@{post.username}</span>
                 {post.flagged === 1 && (
-                  <span className="flex items-center gap-1 text-amber-400 text-xs bg-amber-500/10 px-2 py-1 rounded">
-                    <AlertTriangle size={12} /> Flagged for moderation
-                  </span>
+                  <span className="cg-badge cg-badge-signal">Flagged for moderation</span>
                 )}
               </div>
-              <p className="text-slate-200 mb-3">{post.content}</p>
-              <div className="flex items-center gap-1 text-slate-500 text-xs">
-                <MessageSquare size={14} /> {post.comment_count} comments
+              <p className="text-paper mb-3 text-sm">{post.content}</p>
+              <div className="text-paper-dim text-xs cg-mono">
+                {post.comment_count} comments
               </div>
             </Link>
           ))

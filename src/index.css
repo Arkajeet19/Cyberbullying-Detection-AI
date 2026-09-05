@@ -1,12 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --color-ink: #10161a;
+  --color-panel: #171f24;
+  --color-panel-line: #232d33;
+  --color-paper: #e8e3d7;
+  --color-paper-dim: #9ca6a8;
+  --color-signal: #d99a4e;
+  --color-alarm: #b4573f;
+  --color-clear: #7a9b7e;
+
+  --font-display: "Fraunces", ui-serif, serif;
+  --font-body: "IBM Plex Sans", ui-sans-serif, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    #020617,
-    #0f172a,
-    #111827
+  background: var(--color-ink);
+  background-image: radial-gradient(
+    ellipse 80% 60% at 50% -10%,
+    rgba(217, 154, 78, 0.06),
+    transparent 60%
   );
+  background-attachment: fixed;
+  color: var(--color-paper);
+  font-family: var(--font-body);
+}
+
+/* Structural surfaces: small radius, hairline border -- reserved for
+   panels/cards/inputs. Kept visually distinct from the pill radius used
+   on interactive signal elements (badges, pills) so structure and
+   signal never look like the same kind of object. */
+.cg-panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-panel-line);
+  border-radius: 8px;
+}
+
+.cg-input {
+  background: var(--color-ink);
+  border: 1px solid var(--color-panel-line);
+  border-radius: 6px;
+  color: var(--color-paper);
+  font-family: var(--font-body);
+}
+.cg-input:focus {
+  outline: none;
+  border-color: var(--color-signal);
+}
+.cg-input::placeholder {
+  color: var(--color-paper-dim);
+}
+
+/* Flat color blocks, no gradients/shadows -- deliberate departure from
+   the gradient-button SaaS default. */
+.cg-btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+.cg-btn-signal {
+  background: var(--color-signal);
+  color: var(--color-ink);
+}
+.cg-btn-signal:hover {
+  background: #e3ab63;
+}
+.cg-btn-quiet {
+  background: transparent;
+  border: 1px solid var(--color-panel-line);
+  color: var(--color-paper);
+}
+.cg-btn-quiet:hover {
+  border-color: var(--color-paper-dim);
+}
+.cg-btn-alarm {
+  background: var(--color-alarm);
+  color: var(--color-paper);
+}
+.cg-btn-alarm:hover {
+  background: #c4634a;
+}
+.cg-btn-clear {
+  background: var(--color-clear);
+  color: var(--color-ink);
+}
+.cg-btn-clear:hover {
+  background: #89ab8e;
+}
+.cg-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Pill radius reserved for signal/status elements only. */
+.cg-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.cg-badge-signal {
+  background: rgba(217, 154, 78, 0.12);
+  color: var(--color-signal);
+  border: 1px solid rgba(217, 154, 78, 0.35);
+}
+.cg-badge-clear {
+  background: rgba(122, 155, 126, 0.12);
+  color: var(--color-clear);
+  border: 1px solid rgba(122, 155, 126, 0.35);
+}
+.cg-badge-alarm {
+  background: rgba(180, 87, 63, 0.12);
+  color: var(--color-alarm);
+  border: 1px solid rgba(180, 87, 63, 0.35);
+}
+
+/* Signal trace: the recurring confidence-readout element used on the
+   landing hero and anywhere a probability is shown as a line rather
+   than a badge. */
+.cg-trace-track {
+  background: var(--color-ink);
+  border: 1px solid var(--color-panel-line);
+  border-radius: 3px;
+  height: 6px;
+  overflow: hidden;
+}
+.cg-trace-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cg-mono {
+  font-family: var(--font-mono);
+}
+.cg-display {
+  font-family: var(--font-display);
 }

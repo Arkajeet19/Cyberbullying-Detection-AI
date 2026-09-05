@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Lock } from "lucide-react";
 import { fetchAdminQueue, reviewItem, fetchForumQueue, forumModAction } from "../api";
 
 function formatLabel(label) {
@@ -34,29 +33,29 @@ function ForumQueueTab({ adminKey }) {
     }
   };
 
-  if (loading) return <div className="text-center text-slate-500 py-10">Loading...</div>;
+  if (loading) return <div className="text-center text-paper-dim py-10 text-sm">Loading...</div>;
 
   return (
     <>
       {reports.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-3">Pending Reports</h2>
+          <h2 className="text-sm cg-mono text-paper-dim mb-3">pending reports</h2>
           <div className="space-y-2">
             {reports.map((r) => (
-              <div key={r.id} className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-sm">
-                <span className="text-slate-400">
-                  {r.target_type} #{r.target_id} reported by user #{r.reporter_id}
+              <div key={r.id} className="cg-panel p-4 text-sm">
+                <span className="text-paper-dim cg-mono text-xs">
+                  {r.target_type} #{r.target_id} — reported by user #{r.reporter_id}
                 </span>
-                {r.reason && <p className="text-slate-300 mt-1">"{r.reason}"</p>}
+                {r.reason && <p className="text-paper mt-1">"{r.reason}"</p>}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <h2 className="text-lg font-semibold mb-3">Flagged Content</h2>
+      <h2 className="text-sm cg-mono text-paper-dim mb-3">flagged content</h2>
       {items.length === 0 ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-10 text-center text-slate-500">
+        <div className="cg-panel p-10 text-center text-paper-dim text-sm">
           Nothing pending — the queue is clear.
         </div>
       ) : (
@@ -66,16 +65,16 @@ function ForumQueueTab({ adminKey }) {
               .filter(([k, v]) => k !== "not_cyberbullying" && v.flagged === 1)
               .map(([k, v]) => ({ key: k, confidence: v.confidence }));
             return (
-              <div key={`${item.type}-${item.id}`} className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div key={`${item.type}-${item.id}`} className="cg-panel p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-400">
-                    {item.type === "post" ? "Post" : "Comment"} by @{item.username}
+                  <span className="text-xs text-paper-dim cg-mono">
+                    {item.type} by @{item.username}
                   </span>
                 </div>
-                <p className="text-slate-200 mb-3">{item.content}</p>
+                <p className="text-paper mb-3 text-sm">{item.content}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {flags.map(({ key, confidence }) => (
-                    <span key={key} className="bg-red-500/10 text-red-400 text-xs px-2 py-1 rounded">
+                    <span key={key} className="cg-badge cg-badge-signal">
                       {formatLabel(key)} {(confidence * 100).toFixed(0)}%
                     </span>
                   ))}
@@ -83,21 +82,21 @@ function ForumQueueTab({ adminKey }) {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => handleAction(item.type, item.id, "approve")}
-                    className="bg-green-600/20 text-green-400 hover:bg-green-600/30 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                    className="cg-btn cg-btn-clear px-3 py-1.5 text-xs"
                   >
                     Approve
                   </button>
                   <button
                     onClick={() => handleAction(item.type, item.id, "remove")}
-                    className="bg-red-600/20 text-red-400 hover:bg-red-600/30 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                    className="cg-btn cg-btn-alarm px-3 py-1.5 text-xs"
                   >
                     Remove
                   </button>
                   <button
                     onClick={() => handleAction(item.type, item.id, "warn")}
-                    className="bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                    className="cg-btn cg-btn-quiet px-3 py-1.5 text-xs"
                   >
-                    Warn User
+                    Warn user
                   </button>
                   <button
                     onClick={() => {
@@ -105,9 +104,9 @@ function ForumQueueTab({ adminKey }) {
                         handleAction(item.type, item.id, "ban");
                       }
                     }}
-                    className="bg-slate-700 text-slate-300 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                    className="cg-btn cg-btn-quiet px-3 py-1.5 text-xs"
                   >
-                    Ban User
+                    Ban user
                   </button>
                 </div>
               </div>
@@ -141,10 +140,10 @@ function ClassifierQueueTab({ adminKey }) {
     }
   };
 
-  if (loading) return <div className="text-center text-slate-500 py-10">Loading...</div>;
+  if (loading) return <div className="text-center text-paper-dim py-10 text-sm">Loading...</div>;
 
   return queue.length === 0 ? (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-10 text-center text-slate-500">
+    <div className="cg-panel p-10 text-center text-paper-dim text-sm">
       Nothing pending — the queue is clear.
     </div>
   ) : (
@@ -154,11 +153,11 @@ function ClassifierQueueTab({ adminKey }) {
           .filter(([k, v]) => k !== "not_cyberbullying" && v.flagged === 1)
           .map(([k, v]) => ({ key: k, confidence: v.confidence }));
         return (
-          <div key={item.id} className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-            <p className="text-slate-200 mb-3">{item.text}</p>
+          <div key={item.id} className="cg-panel p-5">
+            <p className="text-paper mb-3 text-sm">{item.text}</p>
             <div className="flex flex-wrap gap-2 mb-4">
               {flags.map(({ key, confidence }) => (
-                <span key={key} className="bg-red-500/10 text-red-400 text-xs px-2 py-1 rounded">
+                <span key={key} className="cg-badge cg-badge-signal">
                   {formatLabel(key)} {(confidence * 100).toFixed(0)}%
                 </span>
               ))}
@@ -168,13 +167,13 @@ function ClassifierQueueTab({ adminKey }) {
               placeholder="Optional note..."
               value={notes[item.id] || ""}
               onChange={(e) => setNotes((n) => ({ ...n, [item.id]: e.target.value }))}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 mb-3 text-sm focus:outline-none focus:border-blue-500"
+              className="cg-input w-full px-3 py-2 mb-3 text-sm"
             />
             <button
               onClick={() => handleReview(item.id)}
-              className="bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-2 rounded-lg text-sm font-semibold"
+              className="cg-btn cg-btn-signal px-4 py-2 text-sm"
             >
-              Mark Reviewed
+              Mark reviewed
             </button>
           </div>
         );
@@ -212,45 +211,48 @@ function Admin() {
 
   if (!unlocked) {
     return (
-      <div className="max-w-md mx-auto px-6 py-24 text-center">
-        <Lock className="mx-auto text-blue-500 mb-4" size={40} />
-        <h1 className="text-2xl font-bold mb-6">Admin Access</h1>
+      <div className="max-w-sm mx-auto px-6 py-24 text-center">
+        <h1 className="font-display text-3xl mb-8">Admin access</h1>
         <input
           type="password"
           value={adminKey}
           onChange={(e) => setAdminKey(e.target.value)}
           placeholder="Admin key"
-          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:border-blue-500"
+          className="cg-input w-full px-4 py-3 mb-4 text-sm"
           onKeyDown={(e) => e.key === "Enter" && tryUnlock(adminKey)}
         />
         <button
           onClick={() => tryUnlock(adminKey)}
           disabled={loading || !adminKey}
-          className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 py-3 rounded-lg font-semibold disabled:opacity-50"
+          className="cg-btn cg-btn-signal w-full py-3 text-sm"
         >
           {loading ? "Checking..." : "Unlock"}
         </button>
-        {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
+        {error && <p className="text-alarm text-sm mt-4">{error}</p>}
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <h1 className="text-4xl font-extrabold mb-6">Review Queue</h1>
+    <div className="max-w-3xl mx-auto px-6 py-16">
+      <h1 className="font-display text-4xl mb-6">Review queue</h1>
 
-      <div className="flex gap-2 mb-8">
+      <div className="flex gap-1 mb-8 border-b border-panel-line">
         <button
           onClick={() => setTab("forum")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold ${tab === "forum" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-400"}`}
+          className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
+            tab === "forum" ? "border-signal text-paper" : "border-transparent text-paper-dim hover:text-paper"
+          }`}
         >
-          Forum Content
+          Forum content
         </button>
         <button
           onClick={() => setTab("classifier")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold ${tab === "classifier" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-400"}`}
+          className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
+            tab === "classifier" ? "border-signal text-paper" : "border-transparent text-paper-dim hover:text-paper"
+          }`}
         >
-          Moderate Tool Log
+          Moderate tool log
         </button>
       </div>
 

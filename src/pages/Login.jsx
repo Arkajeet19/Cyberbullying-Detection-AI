@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LogIn } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
@@ -26,39 +25,36 @@ function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-24">
-      <div className="text-center mb-8">
-        <LogIn className="mx-auto text-blue-500 mb-3" size={36} />
-        <h1 className="text-3xl font-bold">Log In</h1>
-      </div>
+    <div className="max-w-sm mx-auto px-6 py-24">
+      <h1 className="font-display text-3xl mb-8 text-center">Log in</h1>
 
-      <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="cg-panel p-6 space-y-4">
         <input
           type="text"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+          className="cg-input w-full px-4 py-3 text-sm"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+          className="cg-input w-full px-4 py-3 text-sm"
         />
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-alarm text-sm">{error}</p>}
         <button
           type="submit"
           disabled={loading || !username || !password}
-          className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 py-3 rounded-lg font-semibold disabled:opacity-50"
+          className="cg-btn cg-btn-signal w-full py-3 text-sm"
         >
-          {loading ? "Logging in..." : "Log In"}
+          {loading ? "Logging in..." : "Log in"}
         </button>
       </form>
 
-      <p className="text-center text-slate-400 text-sm mt-4">
-        No account? <Link to="/register" className="text-blue-400 hover:underline">Register</Link>
+      <p className="text-center text-paper-dim text-sm mt-4">
+        No account? <Link to="/register" className="text-signal hover:underline">Register</Link>
       </p>
     </div>
   );

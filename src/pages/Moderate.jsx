@@ -40,17 +40,15 @@ function Moderate() {
     : [];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold mb-3">Moderate Content</h1>
-        <p className="text-slate-400">
-          Paste any text below to run it through CyberGuard's classifier.
-        </p>
+    <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="mb-10">
+        <h1 className="font-display text-4xl mb-3">Moderate content</h1>
+        <p className="text-paper-dim">Submit text to run it through the classifier.</p>
       </div>
 
-      <div className="bg-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-800">
+      <div className="cg-panel p-6">
         <textarea
-          className="w-full h-56 bg-slate-800 rounded-xl p-4 border border-slate-700 focus:outline-none focus:border-blue-500 text-lg resize-none"
+          className="cg-input w-full h-40 p-4 text-base resize-none"
           placeholder="Enter text to analyze..."
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -59,60 +57,50 @@ function Moderate() {
         <button
           onClick={analyze}
           disabled={loading || !text.trim()}
-          className="w-full mt-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all py-4 rounded-xl font-semibold text-lg shadow-lg"
+          className="cg-btn cg-btn-signal w-full mt-4 py-3 text-sm"
         >
-          {loading ? "Analyzing..." : "Analyze Text"}
+          {loading ? "Analyzing..." : "Analyze text"}
         </button>
 
         {error && (
-          <div className="mt-4 bg-red-500/10 border border-red-500 rounded-xl p-4 text-red-400 text-sm">
+          <div className="mt-4 border border-alarm/40 bg-alarm/10 rounded p-4 text-alarm text-sm">
             {error}
           </div>
         )}
 
         {result && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-6">Analysis Results</h2>
-
+          <div className="mt-8 border-t border-panel-line pt-6">
             {detected.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 mb-6">
                 {detected.map(({ key, confidence }) => (
-                  <div
-                    key={key}
-                    className="bg-red-500/10 border border-red-500 rounded-xl p-5 flex items-center justify-between"
-                  >
-                    <span className="text-red-400 font-semibold text-lg">
-                      🚨 {formatLabel(key)}
-                    </span>
-                    <span className="text-red-300 font-mono text-sm">
-                      {(confidence * 100).toFixed(0)}%
-                    </span>
+                  <div key={key} className="cg-badge cg-badge-signal">
+                    {formatLabel(key)}
+                    <span className="cg-mono">{(confidence * 100).toFixed(0)}%</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="bg-green-500/10 border border-green-500 rounded-xl p-5 text-center">
-                <span className="text-green-400 font-semibold text-lg">
-                  ✅ No cyberbullying detected
-                </span>
-              </div>
+              <div className="cg-badge cg-badge-clear mb-6">Clean — no cyberbullying detected</div>
             )}
 
-            <details className="mt-6">
-              <summary className="cursor-pointer text-slate-400 text-sm hover:text-slate-200">
-                Show full confidence breakdown
+            <details>
+              <summary className="cursor-pointer text-paper-dim text-sm hover:text-paper transition-colors">
+                Full confidence breakdown
               </summary>
-              <div className="mt-3 space-y-2">
+              <div className="mt-4 space-y-3">
                 {allScores.map(({ key, confidence }) => (
                   <div key={key} className="flex items-center gap-3">
-                    <span className="w-40 text-sm text-slate-300 shrink-0">{formatLabel(key)}</span>
-                    <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <span className="w-40 text-sm text-paper-dim shrink-0">{formatLabel(key)}</span>
+                    <div className="cg-trace-track flex-1">
                       <div
-                        className="h-full bg-blue-500"
-                        style={{ width: `${(confidence * 100).toFixed(1)}%` }}
+                        className="cg-trace-fill"
+                        style={{
+                          width: `${(confidence * 100).toFixed(1)}%`,
+                          background: confidence > 0.5 ? "var(--color-signal)" : "var(--color-clear)",
+                        }}
                       />
                     </div>
-                    <span className="w-12 text-right text-xs text-slate-400 font-mono">
+                    <span className="w-12 text-right cg-mono text-xs text-paper-dim">
                       {(confidence * 100).toFixed(0)}%
                     </span>
                   </div>

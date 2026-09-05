@@ -2,10 +2,21 @@ import axios from "axios";
 
 const API_BASE = "https://cyberbullying-detection-ai.onrender.com";
 
-// withCredentials is required for the session cookie (login state) to be
-// sent on cross-origin requests, since the frontend (Vercel) and backend
-// (Render) are on different domains.
-export const api = axios.create({ baseURL: API_BASE, withCredentials: true });
+export const api = axios.create({ baseURL: API_BASE });
+
+// Attach the auth token (if we have one) to every request. Using a plain
+// Authorization header instead of cookies sidesteps cross-site cookie
+// blocking entirely -- Safari and an increasing share of Chrome installs
+// block third-party cookies by default, which silently broke login when
+// this was cookie-based (frontend on Vercel, backend on Render = different
+// domains = "third-party" from the browser's perspective).
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("cg_auth_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export function moderateText(text) {
   return api.post("/api/moderate", { text }).then((res) => res.data);

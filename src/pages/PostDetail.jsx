@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { AlertTriangle, Flag, CornerDownRight } from "lucide-react";
 import { fetchPost, createComment, reportContent } from "../api";
 import { useAuth } from "../context/AuthContext";
 
@@ -15,23 +14,16 @@ function ReportButton({ targetType, targetId }) {
       console.error(err);
     }
   };
-  if (done) return <span className="text-xs text-slate-500">Reported</span>;
+  if (done) return <span className="text-xs text-paper-dim cg-mono">reported</span>;
   return (
-    <button
-      onClick={handleReport}
-      className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-400 transition-colors"
-    >
-      <Flag size={12} /> Report
+    <button onClick={handleReport} className="text-xs text-paper-dim hover:text-alarm transition-colors cg-mono">
+      report
     </button>
   );
 }
 
 function FlaggedTag() {
-  return (
-    <span className="flex items-center gap-1 text-amber-400 text-xs bg-amber-500/10 px-2 py-1 rounded">
-      <AlertTriangle size={12} /> Flagged for moderation
-    </span>
-  );
+  return <span className="cg-badge cg-badge-signal">Flagged for moderation</span>;
 }
 
 function CommentForm({ onSubmit, placeholder = "Write a comment..." }) {
@@ -60,13 +52,13 @@ function CommentForm({ onSubmit, placeholder = "Write a comment..." }) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-16 bg-slate-800 rounded-lg p-2 border border-slate-700 focus:outline-none focus:border-blue-500 resize-none text-sm"
+        className="cg-input w-full h-16 p-2 text-sm resize-none"
       />
-      {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+      {error && <p className="text-alarm text-xs mt-1">{error}</p>}
       <button
         type="submit"
         disabled={posting || !content.trim()}
-        className="mt-2 bg-blue-600 hover:bg-blue-700 px-4 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+        className="cg-btn cg-btn-quiet mt-2 px-4 py-1.5 text-xs"
       >
         {posting ? "Posting..." : "Reply"}
       </button>
@@ -78,18 +70,18 @@ function Comment({ comment, replies, onReply }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-semibold text-slate-300">@{comment.username}</span>
+    <div className="cg-panel p-4">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="cg-mono text-xs text-paper-dim">@{comment.username}</span>
         {comment.flagged === 1 && <FlaggedTag />}
       </div>
-      <p className="text-slate-200 text-sm mb-2">{comment.content}</p>
+      <p className="text-paper text-sm mb-2">{comment.content}</p>
       <div className="flex items-center gap-4">
         <button
           onClick={() => setShowReplyForm((s) => !s)}
-          className="flex items-center gap-1 text-xs text-slate-500 hover:text-blue-400"
+          className="text-xs text-paper-dim hover:text-signal transition-colors cg-mono"
         >
-          <CornerDownRight size={12} /> Reply
+          reply
         </button>
         <ReportButton targetType="comment" targetId={comment.id} />
       </div>
@@ -104,14 +96,14 @@ function Comment({ comment, replies, onReply }) {
       )}
 
       {replies.length > 0 && (
-        <div className="mt-3 ml-6 space-y-3 border-l-2 border-slate-800 pl-4">
+        <div className="mt-3 ml-5 space-y-3 border-l border-panel-line pl-4">
           {replies.map((reply) => (
             <div key={reply.id}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-semibold text-slate-300">@{reply.username}</span>
+                <span className="cg-mono text-xs text-paper-dim">@{reply.username}</span>
                 {reply.flagged === 1 && <FlaggedTag />}
               </div>
-              <p className="text-slate-200 text-sm mb-1">{reply.content}</p>
+              <p className="text-paper text-sm mb-1">{reply.content}</p>
               <ReportButton targetType="comment" targetId={reply.id} />
             </div>
           ))}
@@ -150,7 +142,7 @@ function PostDetail() {
   };
 
   if (!post) {
-    return <div className="max-w-3xl mx-auto px-6 py-20 text-center text-slate-500">Loading...</div>;
+    return <div className="max-w-2xl mx-auto px-6 py-20 text-center text-paper-dim">Loading...</div>;
   }
 
   const topLevel = comments.filter((c) => !c.parent_comment_id);
@@ -163,35 +155,35 @@ function PostDetail() {
   }, {});
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
-      <Link to="/forum" className="text-blue-400 text-sm hover:underline mb-6 inline-block">
-        ← Back to forum
+    <div className="max-w-2xl mx-auto px-6 py-16">
+      <Link to="/forum" className="text-signal text-sm hover:underline mb-6 inline-block cg-mono">
+        ← back to forum
       </Link>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-8">
+      <div className="cg-panel p-5 mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold text-slate-300">@{post.username}</span>
+          <span className="cg-mono text-xs text-paper-dim">@{post.username}</span>
           {post.flagged === 1 && <FlaggedTag />}
         </div>
-        <p className="text-slate-200 mb-3">{post.content}</p>
+        <p className="text-paper mb-3 text-sm">{post.content}</p>
         <ReportButton targetType="post" targetId={post.id} />
       </div>
 
-      <h2 className="text-lg font-semibold mb-4">Comments</h2>
+      <h2 className="text-sm text-paper-dim mb-4 cg-mono">comments</h2>
 
       {user ? (
         <div className="mb-6">
           <CommentForm onSubmit={handleTopLevelComment} />
         </div>
       ) : (
-        <p className="text-slate-500 text-sm mb-6">
-          <Link to="/login" className="text-blue-400 hover:underline">Log in</Link> to comment.
+        <p className="text-paper-dim text-sm mb-6">
+          <Link to="/login" className="text-signal hover:underline">Log in</Link> to comment.
         </p>
       )}
 
       <div className="space-y-3">
         {topLevel.length === 0 ? (
-          <p className="text-slate-500 text-sm">No comments yet.</p>
+          <p className="text-paper-dim text-sm">No comments yet.</p>
         ) : (
           topLevel.map((comment) => (
             <Comment
