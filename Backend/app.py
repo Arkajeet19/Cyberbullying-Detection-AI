@@ -22,7 +22,7 @@ CORS(app)
 # for a portfolio-scale demo; a production deployment handling real
 # concurrent load would want eventlet/gevent + a proper WSGI server
 # instead of Flask's dev server, same caveat as the rest of this API.
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading", manage_session=False)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
