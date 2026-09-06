@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchAdminQueue, reviewItem, fetchForumQueue, forumModAction } from "../api";
+import { fetchAdminQueue, reviewItem, fetchForumQueue, forumModAction, fetchChatQueue, chatModAction } from "../api";
 
 function formatLabel(label) {
   return label.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -115,6 +115,68 @@ function ForumQueueTab({ adminKey }) {
         </div>
       )}
     </>
+  );
+}
+
+function ChatQueueTab({ adminKey }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    setLoading(true);
+    fetchChatQueue(adminKey)
+      .then((data) => setItems(data.items))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, [adminKey]);
+
+  const handleAction = async (id, action) => {
+    try {
+      await chatModAction(adminKey, id, action);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Action failed.");
+    }
+  };
+
+  if (loading) return <div className="text-center text-paper-dim py-10 text-sm">Loading...</div>;
+
+  return items.length === 0 ? (
+    <div className="cg-panel p-10 text-center text-paper-dim text-sm">
+      Nothing pending — the queue is clear.
+    </div>
+  ) : (
+    <div className="space-y-4">
+      {items.map((item) => {
+        const flags = Object.entries(item.labels)
+          .filter(([k, v]) => k !== "not_cyberbullying" && v.flagged === 1)
+          .map(([k, v]) => ({ key: k, confidence: v.confidence }));
+        return (
+          <div key={item.id} className="cg-panel p-5">
+            <div className="text-xs text-paper-dim cg-mono mb-2">chat message by @{item.username}</div>
+            <p className="text-paper mb-3 text-sm">{item.content}</p>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {flags.map(({ key, confidence }) => (
+                <span key={key} className="cg-badge cg-badge-signal">
+                  {formatLabel(key)} {(confidence * 100).toFixed(0)}%
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => handleAction(item.id, "approve")} className="cg-btn cg-btn-clear px-3 py-1.5 text-xs">
+                Approve
+              </button>
+              <button onClick={() => handleAction(item.id, "remove")} className="cg-btn cg-btn-alarm px-3 py-1.5 text-xs">
+                Remove
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -247,6 +309,14 @@ function Admin() {
           Forum content
         </button>
         <button
+          onClick={() => setTab("chat")}
+          className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
+            tab === "chat" ? "border-signal text-paper" : "border-transparent text-paper-dim hover:text-paper"
+          }`}
+        >
+          Chat messages
+        </button>
+        <button
           onClick={() => setTab("classifier")}
           className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
             tab === "classifier" ? "border-signal text-paper" : "border-transparent text-paper-dim hover:text-paper"
@@ -256,7 +326,13 @@ function Admin() {
         </button>
       </div>
 
-      {tab === "forum" ? <ForumQueueTab adminKey={adminKey} /> : <ClassifierQueueTab adminKey={adminKey} />}
+      {tab === "forum" ? (
+        <ForumQueueTab adminKey={adminKey} />
+      ) : tab === "chat" ? (
+        <ChatQueueTab adminKey={adminKey} />
+      ) : (
+        <ClassifierQueueTab adminKey={adminKey} />
+      )}
     </div>
   );
 }

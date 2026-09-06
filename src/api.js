@@ -115,3 +115,25 @@ export function forumModAction(adminKey, contentType, contentId, action) {
     .then((res) => res.data);
 }
 
+// --- Chat ------------------------------------------------------------------
+
+export function fetchChatHistory() {
+  return api.get("/api/chat/history").then((res) => res.data);
+}
+
+export function fetchChatQueue(adminKey) {
+  return api
+    .get("/api/admin/chat-queue", { headers: { "X-Admin-Key": adminKey } })
+    .then((res) => res.data);
+}
+
+export function chatModAction(adminKey, messageId, action) {
+  return api
+    .post(
+      `/api/admin/chat/${messageId}/${action}`,
+      {},
+      { headers: { "X-Admin-Key": adminKey } }
+    )
+    .then((res) => res.data);
+}
+

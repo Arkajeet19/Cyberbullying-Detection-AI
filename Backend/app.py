@@ -1,8 +1,10 @@
 import os
 from functools import wraps
+from datetime import datetime, timezone
 
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit, disconnect
 from scipy.sparse import hstack
 import joblib
 
@@ -10,21 +12,17 @@ from preprocess import clean_text
 import database
 import forum
 import auth
+import chat
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-in-production")
 
-# Vercel (frontend) and Render (backend) are different domains, so session
-# cookies need SameSite=None + Secure to be sent cross-origin at all.
-# Secure=True requires HTTPS, which breaks local http:// dev, so only
-# enable it when actually running on Render (which sets RENDER=true).
-IS_PRODUCTION = os.environ.get("RENDER") is not None
-app.config.update(
-    SESSION_COOKIE_SAMESITE="None" if IS_PRODUCTION else "Lax",
-    SESSION_COOKIE_SECURE=IS_PRODUCTION,
-)
+CORS(app)
 
-CORS(app, supports_credentials=True)
+# threading mode needs no extra dependency (eventlet/gevent) and is fine
+# for a portfolio-scale demo; a production deployment handling real
+# concurrent load would want eventlet/gevent + a proper WSGI server
+# instead of Flask's dev server, same caveat as the rest of this API.
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,6 +33,7 @@ thresholds = joblib.load(os.path.join(BASE_DIR, "thresholds.pkl"))
 
 database.init_db()
 forum.init_forum_db()
+chat.init_chat_db()
 
 LABELS = [
     'religious_hate',
@@ -163,8 +162,8 @@ def register():
     if user_id is None:
         return jsonify({"error": "username already taken"}), 409
 
-    session["user_id"] = user_id
-    return jsonify({"id": user_id, "username": username})
+    token = auth.generate_token(user_id)
+    return jsonify({"token": token, "id": user_id, "username": username, "status": "active"})
 
 
 @app.route("/api/auth/login", methods=["POST"])
@@ -179,15 +178,18 @@ def login():
     if user["status"] == "banned":
         return jsonify({"error": "this account has been banned"}), 403
 
-    session["user_id"] = user["id"]
+    token = auth.generate_token(user["id"])
     return jsonify({
-        "id": user["id"], "username": user["username"], "status": user["status"]
+        "token": token, "id": user["id"], "username": user["username"], "status": user["status"]
     })
 
 
 @app.route("/api/auth/logout", methods=["POST"])
 def logout():
-    session.pop("user_id", None)
+    # Tokens are stateless (signed, not stored server-side), so there's
+    # nothing to invalidate here -- the frontend just deletes its copy.
+    # A production system wanting real revocation would need a token
+    # blacklist or short-lived tokens with refresh; not needed for this scope.
     return jsonify({"success": True})
 
 
@@ -334,6 +336,105 @@ def admin_forum_action(content_type, content_id, action):
     return jsonify({"success": True})
 
 
+# --- Chat: history + admin queue (REST) ------------------------------------
+
+@app.route("/api/chat/history", methods=["GET"])
+def chat_history():
+    return jsonify({"items": chat.get_recent_messages()})
+
+
+@app.route("/api/admin/chat-queue", methods=["GET"])
+@require_admin
+def admin_chat_queue():
+    return jsonify({"items": chat.get_chat_review_queue()})
+
+
+@app.route("/api/admin/chat/<int:message_id>/<action>", methods=["POST"])
+@require_admin
+def admin_chat_action(message_id, action):
+    if action not in ("approve", "remove"):
+        return jsonify({"error": "invalid action"}), 400
+
+    message = chat.get_message(message_id)
+    if not message:
+        return jsonify({"error": "not found"}), 404
+
+    if action == "approve":
+        chat.set_message_status(message_id, "visible")
+        # Now that a moderator has cleared it, push the real content to
+        # everyone currently in the room.
+        socketio.emit("message_approved", {
+            "id": message["id"],
+            "content": message["content"],
+            "username": message["username"],
+            "severity": message["severity"],
+            "created_at": message["created_at"],
+        }, room="chat")
+    else:
+        chat.set_message_status(message_id, "removed")
+        socketio.emit("message_removed", {"id": message_id}, room="chat")
+
+    return jsonify({"success": True})
+
+
+# --- Chat: real-time (Socket.IO) --------------------------------------------
+
+@socketio.on("connect")
+def on_connect(auth_data):
+    token = (auth_data or {}).get("token")
+    user_id = auth.verify_token(token) if token else None
+    if user_id is None:
+        return False  # reject the connection
+
+    from flask_socketio import join_room
+    join_room("chat")
+
+
+@socketio.on("send_message")
+def on_send_message(data):
+    token = (data or {}).get("token")
+    user_id = auth.verify_token(token) if token else None
+    if user_id is None:
+        disconnect()
+        return
+
+    user = forum.get_user_by_id(user_id)
+    if not user or user["status"] == "banned":
+        return
+
+    content = (data.get("content") or "").strip()
+    if not content:
+        return
+
+    labels = classify(content)
+    severity, top_confidence = chat.severity_for(labels)
+    message_id = chat.create_message(user_id, content, labels, severity)
+    database.log_moderation(content, labels)  # keeps chat in shared analytics too
+
+    base_payload = {
+        "id": message_id,
+        "username": user["username"],
+        "severity": severity,
+        "confidence": round(top_confidence, 4),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    if severity == "flag":
+        # Withhold the actual text from everyone except the sender; it
+        # goes to the moderation queue instead. This is the chat
+        # equivalent of a flagged forum post staying invisible until
+        # a moderator approves it.
+        emit("new_message", {**base_payload, "content": None, "pending": True}, room="chat")
+        emit("message_sent_pending", {**base_payload, "content": content}, room=request.sid)
+    else:
+        # allow / warn / blur all broadcast the real content -- "blur"
+        # is a client-side visual treatment, not server-side withholding.
+        emit("new_message", {**base_payload, "content": content, "pending": False}, room="chat")
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    # allow_unsafe_werkzeug=True: same "don't use in production" caveat as
+    # Flask's own dev server already carries -- fine for this portfolio
+    # deployment's traffic level, not fine for real concurrent load.
+    socketio.run(app, host="0.0.0.0", port=port, allow_unsafe_werkzeug=True)

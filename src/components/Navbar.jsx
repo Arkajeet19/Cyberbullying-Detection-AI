@@ -28,6 +28,7 @@ function Navbar() {
           <NavLink to="/" end className={linkClass}>Home</NavLink>
           <NavLink to="/moderate" className={linkClass}>Moderate</NavLink>
           <NavLink to="/forum" className={linkClass}>Forum</NavLink>
+          <NavLink to="/chat" className={linkClass}>Live Chat</NavLink>
           <NavLink to="/history" className={linkClass}>History</NavLink>
           <NavLink to="/analytics" className={linkClass}>Analytics</NavLink>
           <NavLink to="/admin" className={linkClass}>Admin</NavLink>

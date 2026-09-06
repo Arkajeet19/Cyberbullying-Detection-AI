@@ -7,6 +7,7 @@ import Analytics from "./pages/Analytics";
 import Admin from "./pages/Admin";
 import Forum from "./pages/Forum";
 import PostDetail from "./pages/PostDetail";
+import ChatRoom from "./pages/ChatRoom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
@@ -22,6 +23,7 @@ function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:postId" element={<PostDetail />} />
+        <Route path="/chat" element={<ChatRoom />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
