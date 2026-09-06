@@ -13,6 +13,7 @@ import database
 import forum
 import auth
 import chat
+import rag
 
 app = Flask(__name__)
 
@@ -22,6 +23,12 @@ CORS(app)
 # for a portfolio-scale demo; a production deployment handling real
 # concurrent load would want eventlet/gevent + a proper WSGI server
 # instead of Flask's dev server, same caveat as the rest of this API.
+#
+# manage_session=False: this app uses token-based auth (see auth.py), not
+# Flask's cookie session, so Flask-SocketIO has no reason to touch
+# ctx.session at all. Leaving it enabled hits a real bug -- recent Flask
+# versions made ctx.session read-only (a security fix, CVE-2026-27205),
+# which crashes older Flask-SocketIO releases that assign to it directly.
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading", manage_session=False)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -103,6 +110,21 @@ def moderate():
     log_id = database.log_moderation(text, labels)
 
     return jsonify({"id": log_id, "labels": labels})
+
+
+@app.route("/api/explain", methods=["POST"])
+def explain():
+    """RAG-based explanation for why a category was flagged, grounded in
+    the community guidelines policy text rather than a bare percentage."""
+    data = request.get_json(silent=True) or {}
+    category = data.get("category", "")
+    confidence = data.get("confidence", 0.0)
+
+    if not category:
+        return jsonify({"error": "category is required"}), 400
+
+    result = rag.explain_flag(category, float(confidence))
+    return jsonify(result)
 
 
 @app.route("/predict", methods=["POST"])

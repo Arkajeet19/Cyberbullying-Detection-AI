@@ -1,8 +1,51 @@
 import { useState } from "react";
-import { moderateText } from "../api";
+import { moderateText, explainFlag } from "../api";
 
 function formatLabel(label) {
   return label.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function ExplainButton({ category, confidence }) {
+  const [explanation, setExplanation] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleExplain = async () => {
+    if (explanation) {
+      setExplanation(null); // toggle closed
+      return;
+    }
+    try {
+      setLoading(true);
+      const data = await explainFlag(category, confidence);
+      setExplanation(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <button
+        onClick={handleExplain}
+        disabled={loading}
+        className="text-xs text-paper-dim hover:text-signal transition-colors cg-mono underline decoration-dotted"
+      >
+        {loading ? "retrieving policy..." : explanation ? "hide explanation" : "explain this flag"}
+      </button>
+      {explanation && (
+        <div className="mt-2 cg-panel p-3 text-sm text-paper">
+          <p>{explanation.explanation}</p>
+          {!explanation.generated && (
+            <p className="text-paper-dim text-xs mt-2 italic">
+              Showing the source policy passage directly (LLM generation not configured).
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Moderate() {
@@ -71,11 +114,14 @@ function Moderate() {
         {result && (
           <div className="mt-8 border-t border-panel-line pt-6">
             {detected.length > 0 ? (
-              <div className="space-y-2 mb-6">
+              <div className="space-y-3 mb-6">
                 {detected.map(({ key, confidence }) => (
-                  <div key={key} className="cg-badge cg-badge-signal">
-                    {formatLabel(key)}
-                    <span className="cg-mono">{(confidence * 100).toFixed(0)}%</span>
+                  <div key={key} className="space-y-1.5">
+                    <div className="cg-badge cg-badge-signal">
+                      {formatLabel(key)}
+                      <span className="cg-mono">{(confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    <ExplainButton category={key} confidence={confidence} />
                   </div>
                 ))}
               </div>

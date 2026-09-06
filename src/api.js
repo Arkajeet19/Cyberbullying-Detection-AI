@@ -115,6 +115,12 @@ export function forumModAction(adminKey, contentType, contentId, action) {
     .then((res) => res.data);
 }
 
+// --- Explain (RAG) -----------------------------------------------------
+
+export function explainFlag(category, confidence) {
+  return api.post("/api/explain", { category, confidence }).then((res) => res.data);
+}
+
 // --- Chat ------------------------------------------------------------------
 
 export function fetchChatHistory() {
