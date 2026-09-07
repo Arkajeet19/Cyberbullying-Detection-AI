@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchAdminQueue, reviewItem, fetchForumQueue, forumModAction, fetchChatQueue, chatModAction } from "../api";
+import { fetchAdminQueue, reviewItem, fetchForumQueue, forumModAction, fetchChatQueue, chatModAction, fetchBehaviorList } from "../api";
 
 function formatLabel(label) {
   return label.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -180,6 +180,69 @@ function ChatQueueTab({ adminKey }) {
   );
 }
 
+function BehaviorTab({ adminKey }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null);
+
+  useEffect(() => {
+    fetchBehaviorList(adminKey)
+      .then((data) => setItems(data.items))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, [adminKey]);
+
+  if (loading) return <div className="text-center text-paper-dim py-10 text-sm">Loading...</div>;
+
+  const tierColor = { high: "cg-badge-alarm", medium: "cg-badge-signal", low: "cg-badge-clear" };
+
+  return items.length === 0 ? (
+    <div className="cg-panel p-10 text-center text-paper-dim text-sm">
+      No users with flagged content yet.
+    </div>
+  ) : (
+    <div className="space-y-3">
+      <p className="text-paper-dim text-xs cg-mono mb-4">
+        Looks across each user's history for repeated, targeted patterns — not just single messages.
+      </p>
+      {items.map((item) => (
+        <div key={item.user_id} className="cg-panel p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="cg-mono text-sm">@{item.username}</span>
+            <div className="flex items-center gap-3">
+              <span className="cg-mono text-xs text-paper-dim">score {item.risk_score}/100</span>
+              <span className={`cg-badge ${tierColor[item.risk_tier]}`}>{item.risk_tier}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-xs text-paper-dim mb-2">
+            <span>{item.flagged_count}/{item.total_content} flagged</span>
+            <span>{item.recent_flagged} in last 7 days</span>
+            <span>{item.targets.length} target{item.targets.length !== 1 ? "s" : ""}</span>
+          </div>
+          {item.targets.length > 0 && (
+            <button
+              onClick={() => setExpanded(expanded === item.user_id ? null : item.user_id)}
+              className="text-xs text-signal hover:underline cg-mono"
+            >
+              {expanded === item.user_id ? "hide targets" : "show targets"}
+            </button>
+          )}
+          {expanded === item.user_id && (
+            <div className="mt-2 space-y-1">
+              {item.targets.map((t) => (
+                <div key={t.username} className="text-xs text-paper-dim flex justify-between border-t border-panel-line pt-1.5 mt-1.5">
+                  <span>@{t.username}</span>
+                  <span className="cg-mono">{t.count} flagged comment{t.count !== 1 ? "s" : ""}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ClassifierQueueTab({ adminKey }) {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -317,6 +380,14 @@ function Admin() {
           Chat messages
         </button>
         <button
+          onClick={() => setTab("behavior")}
+          className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
+            tab === "behavior" ? "border-signal text-paper" : "border-transparent text-paper-dim hover:text-paper"
+          }`}
+        >
+          User behavior
+        </button>
+        <button
           onClick={() => setTab("classifier")}
           className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
             tab === "classifier" ? "border-signal text-paper" : "border-transparent text-paper-dim hover:text-paper"
@@ -330,6 +401,8 @@ function Admin() {
         <ForumQueueTab adminKey={adminKey} />
       ) : tab === "chat" ? (
         <ChatQueueTab adminKey={adminKey} />
+      ) : tab === "behavior" ? (
+        <BehaviorTab adminKey={adminKey} />
       ) : (
         <ClassifierQueueTab adminKey={adminKey} />
       )}

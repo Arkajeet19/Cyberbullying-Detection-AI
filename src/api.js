@@ -115,6 +115,14 @@ export function forumModAction(adminKey, contentType, contentId, action) {
     .then((res) => res.data);
 }
 
+// --- Behavior detection ---------------------------------------------------
+
+export function fetchBehaviorList(adminKey) {
+  return api
+    .get("/api/admin/behavior", { headers: { "X-Admin-Key": adminKey } })
+    .then((res) => res.data);
+}
+
 // --- Explain (RAG) -----------------------------------------------------
 
 export function explainFlag(category, confidence) {

@@ -14,6 +14,7 @@ import forum
 import auth
 import chat
 import rag
+import behavior
 
 app = Flask(__name__)
 
@@ -125,6 +126,24 @@ def explain():
 
     result = rag.explain_flag(category, float(confidence))
     return jsonify(result)
+
+
+# --- Behavior detection (admin) ---------------------------------------------
+
+@app.route("/api/admin/behavior", methods=["GET"])
+@require_admin
+def admin_behavior():
+    return jsonify({"items": behavior.get_all_users_risk()})
+
+
+@app.route("/api/admin/behavior/<int:user_id>", methods=["GET"])
+@require_admin
+def admin_behavior_detail(user_id):
+    user = forum.get_user_by_id(user_id)
+    if not user:
+        return jsonify({"error": "not found"}), 404
+    risk = behavior.compute_risk(user_id)
+    return jsonify({"username": user["username"], "status": user["status"], **risk})
 
 
 @app.route("/predict", methods=["POST"])
