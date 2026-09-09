@@ -65,11 +65,12 @@ function Forum() {
         {posts.length === 0 ? (
           <p className="text-paper-dim text-center py-10 text-sm">No posts yet — be the first.</p>
         ) : (
-          posts.map((post) => (
+          posts.map((post, i) => (
             <Link
               key={post.id}
               to={`/forum/${post.id}`}
-              className="block cg-panel p-5 hover:border-signal/40 transition-colors"
+              className="block cg-panel p-5 hover:border-signal/40 transition-colors cg-reveal"
+              style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="cg-mono text-xs text-paper-dim">@{post.username}</span>

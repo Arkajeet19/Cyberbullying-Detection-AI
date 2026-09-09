@@ -46,12 +46,12 @@ function History() {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => {
+              {items.map((item, i) => {
                 const flags = Object.entries(item.labels)
                   .filter(([k, v]) => k !== "not_cyberbullying" && v.flagged === 1)
                   .map(([k, v]) => ({ key: k, confidence: v.confidence }));
                 return (
-                  <tr key={item.id} className="border-t border-panel-line">
+                  <tr key={item.id} className="border-t border-panel-line cg-reveal" style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
                     <td className="px-4 py-3 max-w-md truncate text-paper">
                       {item.text}
                     </td>

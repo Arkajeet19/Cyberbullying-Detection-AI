@@ -145,3 +145,54 @@ body {
 .cg-display {
   font-family: var(--font-display);
 }
+
+/* Motion: one shared reveal animation used for staggered list items
+   (forum posts, history rows, confidence bars) and page transitions.
+   Deliberately kept to a single subtle pattern rather than different
+   effects per page, so motion reads as one consistent "coming online"
+   moment instead of a grab-bag of animation styles. */
+@keyframes cg-reveal-kf {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.cg-reveal {
+  animation: cg-reveal-kf 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cg-page-fade-kf {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.cg-page-fade {
+  animation: cg-page-fade-kf 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-reveal, .cg-page-fade {
+    animation: none;
+  }
+}
+
+/* Faint background texture -- a barely-visible grid, used sparingly as a
+   section backdrop. Deliberately subtle (5% opacity lines): it should
+   read as "sophisticated" without being consciously noticed. */
+.cg-grid-texture {
+  position: relative;
+}
+.cg-grid-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(232, 227, 215, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 227, 215, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: -1;
+}

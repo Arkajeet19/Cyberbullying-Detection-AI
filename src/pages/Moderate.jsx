@@ -115,8 +115,8 @@ function Moderate() {
           <div className="mt-8 border-t border-panel-line pt-6">
             {detected.length > 0 ? (
               <div className="space-y-3 mb-6">
-                {detected.map(({ key, confidence }) => (
-                  <div key={key} className="space-y-1.5">
+                {detected.map(({ key, confidence }, i) => (
+                  <div key={key} className="space-y-1.5 cg-reveal" style={{ animationDelay: `${i * 70}ms` }}>
                     <div className="cg-badge cg-badge-signal">
                       {formatLabel(key)}
                       <span className="cg-mono">{(confidence * 100).toFixed(0)}%</span>
@@ -134,8 +134,8 @@ function Moderate() {
                 Full confidence breakdown
               </summary>
               <div className="mt-4 space-y-3">
-                {allScores.map(({ key, confidence }) => (
-                  <div key={key} className="flex items-center gap-3">
+                {allScores.map(({ key, confidence }, i) => (
+                  <div key={key} className="flex items-center gap-3 cg-reveal" style={{ animationDelay: `${i * 35}ms` }}>
                     <span className="w-40 text-sm text-paper-dim shrink-0">{formatLabel(key)}</span>
                     <div className="cg-trace-track flex-1">
                       <div
